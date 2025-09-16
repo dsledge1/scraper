@@ -52,22 +52,49 @@ class TestCrawl(unittest.TestCase):
         expected = "sub.blog.boot.dev/path"
         self.assertEqual(actual, expected)
 
-def test_get_h1_from_html_basic(self):
-    input_body = '<html><body><h1>Test Title</h1></body></html>'
-    actual = get_h1_from_html(input_body)
-    expected = "Test Title"
-    self.assertEqual(actual, expected)
+    def test_get_h1_from_html_basic(self):
+        input_body = '<html><body><h1>Test Title</h1></body></html>'
+        actual = get_h1_from_html(input_body)
+        expected = "Test Title"
+        self.assertEqual(actual, expected)
 
-def test_get_first_paragraph_from_html_main_priority(self):
-    input_body = '''<html><body>
-        <p>Outside paragraph.</p>
-        <main>
-            <p>Main paragraph.</p>
-        </main>
-    </body></html>'''
-    actual = get_first_paragraph_from_html(input_body)
-    expected = "Main paragraph."
-    self.assertEqual(actual, expected)
+    def test_get_h1_from_html_no_h1(self):
+        input_body = '<html><body><h2>No H1 Here</h2></body></html>'
+        actual = get_h1_from_html(input_body)
+        expected = ""
+        self.assertEqual(actual, expected)
+
+    def test_get_h1_from_html_multiple_h1(self):
+        input_body = '<html><body><h1>First H1</h1><h1>Second H1</h1></body></html>'
+        actual = get_h1_from_html(input_body)
+        expected = "First H1"
+        self.assertEqual(actual, expected)
+        
+    def test_get_first_paragraph_from_html_main_priority(self):
+        input_body = '''<html><body>
+            <p>Outside paragraph.</p>
+            <main>
+                <p>Main paragraph.</p>
+            </main>
+        </body></html>'''
+        actual = get_first_paragraph_from_html(input_body)
+        expected = "Main paragraph."
+        self.assertEqual(actual, expected)
+        
+    def test_get_first_paragraph_from_html_no_main(self):
+        input_body = '''<html><body>
+            <p>First paragraph.</p>
+            <p>Second paragraph.</p>
+        </body></html>'''
+        actual = get_first_paragraph_from_html(input_body)
+        expected = "First paragraph."
+        self.assertEqual(actual, expected)
+
+    def test_get_first_paragraph_from_html_no_paragraphs(self):
+        input_body = '<html><body><div>No paragraphs here.</div></body></html>'
+        actual = get_first_paragraph_from_html(input_body)
+        expected = ""
+        self.assertEqual(actual, expected)
 
 if __name__ == "__main__":
     unittest.main()
