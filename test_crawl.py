@@ -96,5 +96,62 @@ class TestCrawl(unittest.TestCase):
         expected = ""
         self.assertEqual(actual, expected)
 
+    def test_get_urls_from_html_absolute(self):
+        input_url = "https://blog.boot.dev"
+        input_body = '<html><body><a href="https://blog.boot.dev"><span>Boot.dev</span></a></body></html>'
+        actual = get_urls_from_html(input_body, input_url)
+        expected = ["https://blog.boot.dev"]
+        self.assertEqual(actual, expected)
+
+    def test_get_urls_from_html_trailing_slash(self):
+        input_url = "https://blog.boot.dev"
+        input_body = '<html><body><a href="https://blog.boot.dev/"><span>Boot.dev</span></a></body></html>'
+        actual = get_urls_from_html(input_body, input_url)
+        expected = ["https://blog.boot.dev/"]
+        self.assertEqual(actual, expected)
+
+    def test_get_urls_from_html_no_https(self):
+        input_url = "https://blog.boot.dev"
+        input_body = '<html><body><a href="blog.boot.dev/"><span>Boot.dev</span></a></body></html>'
+        actual = get_urls_from_html(input_body, input_url)
+        expected = ["blog.boot.dev/"]
+        self.assertEqual(actual, expected)
+    
+    def test_get_urls_from_html_relative(self):
+        input_url = "https://blog.boot.dev"
+        input_body = '<html><body><a href="/path"><span>Boot.dev</span></a></body></html>'
+        actual = get_urls_from_html(input_body, input_url)
+        expected = ["https://blog.boot.dev/path"]
+        self.assertEqual(actual, expected)
+
+    def test_get_urls_from_html_relative_subpath(self):
+        input_url = "https://blog.boot.dev/subpath"
+        input_body = '<html><body><a href="/path"><span>Boot.dev</span></a></body></html>'
+        actual = get_urls_from_html(input_body, input_url)
+        expected = ["https://blog.boot.dev/path"]
+        self.assertEqual(actual, expected)
+
+    def test_get_urls_from_html_relative_multiple_subpath(self):
+        input_url = "https://blog.boot.dev/subpath/more"
+        input_body = '<html><body><a href="/path"><span>Boot.dev</span></a></body></html>'
+        actual = get_urls_from_html(input_body, input_url)
+        expected = ["https://blog.boot.dev/path"]
+        self.assertEqual(actual, expected)
+
+    def test_get_urls_from_html_multiple_links(self):
+        input_url = "https://blog.boot.dev"
+        input_body = '''<html><body>
+            <a href="/path1"><span>Link 1</span></a>
+            <a href="https://blog.boot.dev/path2"><span>Link 2</span></a>
+            <a href="/path3"><span>Link 3</span></a>
+        </body></html>'''
+        actual = get_urls_from_html(input_body, input_url)
+        expected = [
+            "https://blog.boot.dev/path1",
+            "https://blog.boot.dev/path2",
+            "https://blog.boot.dev/path3"
+        ]
+        self.assertEqual(actual, expected)
+
 if __name__ == "__main__":
     unittest.main()
