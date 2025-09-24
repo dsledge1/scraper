@@ -1,5 +1,6 @@
 from urllib.parse import urlparse, urlunparse, urljoin
 from bs4 import BeautifulSoup
+import requests
 
 def normalize_url(urlstring: str) -> str:
     if not isinstance(urlstring, str):
@@ -94,3 +95,32 @@ def extract_page_data(html, page_url):
     data["outgoing_links"]=get_urls_from_html(html, page_url)
     data["image_urls"]=get_images_from_html(html, page_url)
     return data
+
+def get_html(url):
+    try:
+        r = requests.get(url, headers={"User-Agent": "BootCrawler/1.0"})
+    except requests.exceptions.RequestException as e:
+        raise SystemExit(e)
+    if r.status_code >= 400:
+        r.raise_for_status()
+    if not r.headers['Content-Type'].startswith('text/html'):
+        raise Exception("Content type is not text/html")
+    return r.text
+
+def crawl_page(base_url, current_url=None, page_data=None):
+    parsed_base = urlparse(base_url)
+    if current_url is None:
+        current_url = base_url
+    parsed_current = urlparse(current_url)
+    if parsed_base.hostname != parsed_current.hostname:
+        return
+    norm_current_url = normalize_url(current_url)
+    if norm_current_url in page_data:
+        return
+    r = requests.get(current_url, headers={"User-Agent": "BootCrawler/1.0"})
+    print(f"Crawling: {current_url} - Status code: {r.status_code}")
+    page_data[norm_current_url]=extract_page_data(r.text, current_url)
+    urls = get_urls_from_html(r.text, current_url)
+    for url in urls:
+        crawl_page(base_url, url, page_data)
+    return page_data
