@@ -1,6 +1,9 @@
 from urllib.parse import urlparse, urlunparse, urljoin
 from bs4 import BeautifulSoup
 import requests
+import asyncio
+import aiohttp
+
 
 def normalize_url(urlstring: str) -> str:
     if not isinstance(urlstring, str):
@@ -96,7 +99,7 @@ def extract_page_data(html, page_url):
     data["image_urls"]=get_images_from_html(html, page_url)
     return data
 
-def get_html(url):
+"""def get_html(url):
     try:
         r = requests.get(url, headers={"User-Agent": "BootCrawler/1.0"})
     except requests.exceptions.RequestException as e:
@@ -105,7 +108,7 @@ def get_html(url):
         r.raise_for_status()
     if not r.headers['Content-Type'].startswith('text/html'):
         raise Exception("Content type is not text/html")
-    return r.text
+    return r.text"""
 
 def crawl_page(base_url, current_url=None, page_data=None):
     parsed_base = urlparse(base_url)
@@ -124,3 +127,47 @@ def crawl_page(base_url, current_url=None, page_data=None):
     for url in urls:
         crawl_page(base_url, url, page_data)
     return page_data
+
+class AsyncCrawler:
+    
+    def __init__(self, base_url, page_data=None):
+        self.base_url = base_url
+        url = urlparse(base_url)
+        self.base_domain = url.hostname
+        self.page_data = page_data
+        self.lock = asyncio.Lock()
+        self.max_concurrency = 10
+        self.semaphore = asyncio.Semaphore(self.max_concurrency)
+        self.session = aiohttp.ClientSession()
+
+async def __aenter__(self):
+    self.session = aiohttp.ClientSession()
+    return self
+
+async def __aexit__(self, exc_type, exc_val, exc_tb):
+    await self.session.close()
+
+async def add_page_visit(self, normalized_url):
+    async with self.lock:
+        if normalized_url in self.page_data.keys():
+            return False
+        return True
+
+# Unsureif want to keep this as a standalone function or incorporate  into  get_html
+async def fetch(client):
+    async with client.get('http://python.org') as resp:
+        assert resp.status == 200
+        return await resp.text()
+
+async def get_html(self, url):
+    async with self.client as client:
+        html = await fetch(client)
+        try:
+            r = requests.get(url, headers={"User-Agent": "BootCrawler/1.0"})
+        except requests.exceptions.RequestException as e:   
+            raise SystemExit(e)
+        if r.status_code >= 400:
+            r.raise_for_status()
+        if not r.headers['Content-Type'].startswith('text/html'):
+            raise Exception("Content type is not text/html")
+        return r.text
